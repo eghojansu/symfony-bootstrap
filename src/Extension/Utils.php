@@ -2,7 +2,7 @@
 
 namespace App\Extension;
 
-class Utils
+final class Utils
 {
     public static function className(string $class): string
     {
@@ -25,7 +25,7 @@ class Utils
 
     public static function flatten(string|array|null ...$args): array
     {
-        return array_merge(...array_map(static fn ($arg) => static::split($arg), $args));
+        return array_merge(...array_map(static fn ($arg) => self::split($arg), $args));
     }
 
     public static function random(int $len = 8): string
@@ -84,6 +84,11 @@ class Utils
         return $result;
     }
 
+    public static function find(iterable $items, callable $fn)
+    {
+        return self::some($items, $fn, $found) ? $found['value'] : null;
+    }
+
     public static function some(iterable $items, callable $fn, array &$found = null): bool
     {
         $found = null;
@@ -114,5 +119,28 @@ class Utils
         }
 
         return true;
+    }
+
+    public static function extract(array $source, array $keys, array &$rest = null): array
+    {
+        $rest = $source;
+        $result = array();
+
+        foreach ($keys as $key => $default) {
+            if (is_numeric($key) && is_string($default)) {
+                $key = $default;
+                $default = null;
+            }
+
+            if (isset($rest[$key]) || array_key_exists($key, $rest)) {
+                $result[] = $rest[$key];
+
+                unset($rest[$key]);
+            } else {
+                $result[] = $default;
+            }
+        }
+
+        return $result;
     }
 }

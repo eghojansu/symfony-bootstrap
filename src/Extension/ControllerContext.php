@@ -7,7 +7,7 @@ use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
 
-class RequestContext implements ServiceSubscriberInterface
+final class ControllerContext implements ServiceSubscriberInterface
 {
     public function __construct(private ContainerInterface $container)
     {}
