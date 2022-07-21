@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Extension\StaticController;
+namespace App\Extension\Controller;
 
 use App\Extension\Utils;
 use Symfony\Component\Yaml\Yaml;
@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 #[AutoconfigureTag('routing.loader')]
 final class Loader extends BaseLoader
 {
-    const CONTROLLER = 'App\\Extension\\StaticController\\Handler::handle';
+    const CONTROLLER = 'App\\Extension\\Controller\\Handler::handle';
 
     private $isLoaded = false;
 
@@ -48,7 +48,7 @@ final class Loader extends BaseLoader
 
     public function supports(mixed $resource, ?string $type = null): bool
     {
-        return 'static' === $type && str_ends_with($resource, '.yaml');
+        return 'action_controller' === $type && str_ends_with($resource, '.yaml');
     }
 
     private function createRoute(array $rule): Route
@@ -97,7 +97,7 @@ final class Loader extends BaseLoader
 
     private static function createRouteName(string $path, string $view): string
     {
-        $name = 'static_' . str_replace(array('/', '.'), '_', strlen($path) < 2 ? $view : $path);
+        $name = 'ac_' . str_replace(array('/', '.'), '_', strlen($path) < 2 ? substr($view, 0, strrpos($view, '.')) : $path);
 
         if (preg_match('//u', $name)) {
             return function_exists('mb_strtolower') ? mb_strtolower($name, 'UTF-8') : strtolower($name);

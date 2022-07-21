@@ -14,8 +14,8 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     _instanceof:
-        App\Extension\StaticController\Action:
-            tags: ['app.static_action']
+        App\Extension\Controller\Action:
+            tags: ['app.action_controller']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

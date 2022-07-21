@@ -7,5 +7,5 @@ kernel:
     type: annotation
 
 static:
-    resource: static_routes.yaml
-    type: static
+    resource: routes_ac.yaml
+    type: action_controller

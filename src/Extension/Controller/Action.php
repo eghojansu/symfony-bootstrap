@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Extension\StaticController;
+namespace App\Extension\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

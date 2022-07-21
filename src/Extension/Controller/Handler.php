@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Extension\StaticController;
+namespace App\Extension\Controller;
 
 use App\Extension\Utils;
 use App\Extension\ControllerContext;
@@ -14,7 +14,7 @@ class Handler
 {
     public function __construct(
         private ControllerContext $context,
-        #[TaggedIterator('app.static_action')]
+        #[TaggedIterator('app.action_controller')]
         private iterable $actions,
     ) {}
 
