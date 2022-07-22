@@ -4,9 +4,9 @@ namespace App;
 
 class Project implements \JsonSerializable
 {
-    private $name = 'MyApp';
+    private $name = 'MyApplication';
     private $alias = 'MyApp';
-    private $description = 'MyApp';
+    private $description = 'I can\'t tell you. You can try by yourself.';
     private $year = 2022;
     private $owner = 'My Company, Inc';
     private $homepage = 'http://mycompany.com';
@@ -50,5 +50,16 @@ class Project implements \JsonSerializable
     public function getHomepage(): string
     {
         return $this->homepage;
+    }
+
+    public function getElapsedYear(): string
+    {
+        $yearNow = date('Y');
+
+        if ($this->year >= $yearNow) {
+            return $yearNow;
+        }
+
+        return $this->year . ' - ' . $yearNow;
     }
 }

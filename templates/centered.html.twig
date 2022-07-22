@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+
+{% set bodyclass = 'vh-100 d-flex align-items-center' %}
+{% block body %}
+  <div class="{{ fluid is defined ? 'container-fluid' : 'container ' }}">
+    {% block content %}Voila!{% endblock %}
+  </div>
+{% endblock %}

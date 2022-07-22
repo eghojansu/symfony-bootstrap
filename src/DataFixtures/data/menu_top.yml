@@ -1,0 +1,25 @@
+top:
+    name: Top Menu
+    items:
+        ac:
+            name: Account
+            icon: person
+            items:
+                acacc:
+                    name: Profile
+                    path: /dashboard/account
+                    icon: person-circle
+                ackey:
+                    name: Password
+                    path: /dashboard/account/password
+                    icon: key
+                acact:
+                    name: Activities
+                    path: /dashboard/account/activities
+                    icon: clock-history
+                acout:
+                    name: Logout
+                    icon: power
+                    attrs:
+                        class: text-danger
+                        data-action: logout

@@ -76,28 +76,32 @@ final class Loader extends BaseLoader
 
     private function prepareRoute(string $path, array|string|null $setup): array
     {
+        $rule = array();
+        $view = $path;
+        $methods = array('GET');
+
         if (is_string($setup)) {
-            $rule = array('view' => $setup);
+            $view = $setup;
         } elseif (is_array($setup)) {
+            $view = $setup['view'] ?? $view;
+            $methods = $setup['methods'] ?? $methods;
             $rule = $setup;
-        } else {
-            $rule = array();
         }
 
-        if (empty($rule['view'])) {
-            $rule['view'] = $path;
+        if (!str_ends_with($view, '.twig')) {
+            $view = str_replace('.', '/', $view) . '.html.twig';
         }
 
-        if (!str_ends_with($rule['view'], '.twig')) {
-            $rule['view'] = str_replace('.', '/', $rule['view']) . '.html.twig';
-        }
-
-        return $rule + compact('path');
+        return array(
+            'path' => (str_starts_with($path, '/') ? '' : '/') . $path,
+            'view' => (str_starts_with($view, '/') ? '' : '/') . $view,
+            'methods' => $methods,
+        ) + $rule;
     }
 
     private static function createRouteName(string $path, string $view): string
     {
-        $name = 'ac_' . str_replace(array('/', '.'), '_', strlen($path) < 2 ? substr($view, 0, strrpos($view, '.')) : $path);
+        $name = 'ac' . str_replace(array('/', '.'), '_', strlen($path) < 2 ? substr($view, 0, strrpos($view, '.')) : $path);
 
         if (preg_match('//u', $name)) {
             return function_exists('mb_strtolower') ? mb_strtolower($name, 'UTF-8') : strtolower($name);

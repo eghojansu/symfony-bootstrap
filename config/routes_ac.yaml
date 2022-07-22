@@ -1,2 +1,4 @@
 # used by controller handler
 /: main.home
+/about: main.about
+/login: main.login
