@@ -1,26 +1,26 @@
 {% extends 'base.html.twig' %}
-{% set bodyclass = 'text-center' %}
+{% set bodyclass = 'text-center body-gray' %}
 {% block body %}
 <div class="vh-100 d-flex align-items-center justify-content-center">
-  <form data-controller="login" method="post" autocomplete="off" class="form-signin">
+  <form data-controller="form" method="post" autocomplete="off" class="form-signin">
     <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
 
     <div class="form-floating">
-      <input data-login-target="userid" type="text" class="form-control" id="txtUserid" placeholder="Username or email">
+      <input required name="_userid" type="text" class="form-control" id="txtUserid" placeholder="Username or email">
       <label for="txtUserid">Username or email</label>
     </div>
     <div class="form-floating">
-      <input data-login-target="password" type="password" class="form-control" id="txtPassword" placeholder="Password">
+      <input required name="_password" type="password" class="form-control" id="txtPassword" placeholder="Password">
       <label for="txtPassword">Password</label>
     </div>
 
     <div class="checkbox mb-3">
       <label>
-        <input data-login-target="remember" type="checkbox" value="remember-me"> Remember me
+        <input name="_remember" type="checkbox" value="remember-me"> Remember me
       </label>
     </div>
 
-    <input type="hidden" data-login-target="csrf_token" value="{{ csrf_token('authenticate') }}">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
     <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
     <p class="mt-5 mb-3 text-muted">&copy; {{ project.elapsedYear }}</p>
   </form>
