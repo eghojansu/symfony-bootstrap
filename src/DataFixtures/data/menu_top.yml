@@ -7,19 +7,19 @@ top:
             items:
                 acacc:
                     name: Profile
-                    path: /dashboard/account
+                    path: /account
                     icon: person-circle
                 ackey:
                     name: Password
-                    path: /dashboard/account/password
+                    path: /account/password
                     icon: key
                 acact:
                     name: Activities
-                    path: /dashboard/account/activities
+                    path: /account/activities
                     icon: clock-history
                 acout:
                     name: Logout
                     icon: power
                     attrs:
                         class: text-danger
-                        data-action: logout
+                        data-confirm: /account/logout

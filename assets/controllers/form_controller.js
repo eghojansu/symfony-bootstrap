@@ -1,4 +1,4 @@
-import FormC from '../lib/form'
+import FormController from '../lib/form'
 
-export default class extends FormC {
+export default class extends FormController {
 }

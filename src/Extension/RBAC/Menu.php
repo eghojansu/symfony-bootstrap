@@ -7,6 +7,7 @@ use App\Extension\Utils;
 use App\Repository\CsmenuRepository;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\UrlHelper;
 
 final class Menu
 {
@@ -16,11 +17,15 @@ final class Menu
     const TARGET_EDITING = 'editing';
 
     private $all;
+    private $currentPath;
 
     public function __construct(
         private CsmenuRepository $repo,
-        private Security $security,
         private RequestStack $requestStack,
+        private Security $security,
+        private UrlHelper $urlHelper,
+        private bool $prefixPath = true,
+        private bool $activable = true,
     ) {}
 
     public static function create(
@@ -81,16 +86,14 @@ final class Menu
 
     public function getRoot(string $root): array
     {
-        return $this->build($root, $this->getAll(), null, true);
+        return $this->build($root, $this->getAll());
     }
 
-    public function getTree(bool $activable = false): array
+    public function getTree(): array
     {
         return $this->buildTree(
             array(self::ROOT_DASHBOARD, self::ROOT_TOP),
             $this->getAll(),
-            'client',
-            $activable,
         );
     }
 
@@ -99,6 +102,7 @@ final class Menu
         return $this->buildTree(
             array(self::ROOT_DASHBOARD, self::ROOT_TOP),
             $this->repo->findAll(),
+            self::TARGET_EDITING,
         );
     }
 
@@ -129,26 +133,23 @@ final class Menu
 
     private function getAll()
     {
-        return $this->all ?? (
-            $this->all = $this->repo->getMenu()
-        );
+        return $this->all ?? ($this->all = $this->repo->getMenu());
     }
 
     private function serializeForClient(
         Csmenu $menu,
         string $parent,
         array $items,
-        bool|null $activable,
     ): array {
         return array(
             'id' => $menu->getId(),
-            'url' => $menu->getPath(),
+            'url' => $this->url($menu),
             'text' => $menu->getName(),
             'hint' => $menu->getHint(),
             'icon' => $menu->getIcon(),
             'order' => $menu->getPriority(),
             'attrs' => $menu->getAttrs(),
-            'active' => $activable && $this->active($menu, $items),
+            'active' => $this->active($menu, $items),
             'has_child' => count($items) > 0,
         ) + compact('parent', 'items');
     }
@@ -190,7 +191,6 @@ final class Menu
         string $parent,
         array $rows,
         string $target = null,
-        bool $activable = null,
     ): array {
         $menu = Utils::reduce(
             $rows,
@@ -199,7 +199,7 @@ final class Menu
                 Csmenu $row,
                 $key,
                 array $rows,
-            ) use ($parent, $target, $activable) {
+            ) use ($parent, $target) {
                 if (
                     $parent !== $row->getParent()?->getId()
                     || $this->skip($row)
@@ -207,11 +207,11 @@ final class Menu
                     return $menu;
                 }
 
-                $items = $this->build($row->getId(), $rows, $target, $activable);
+                $items = $this->build($row->getId(), $rows, $target);
 
                 $menu[$row->getId()] = match($target) {
                     self::TARGET_EDITING => $this->serializeForEditing($row, $parent, $items),
-                    default => $this->serializeForClient($row, $parent, $items, $activable),
+                    default => $this->serializeForClient($row, $parent, $items),
                 };
 
                 return $menu;
@@ -241,16 +241,30 @@ final class Menu
             $menu->getPath()
             && preg_match(
                 $menu->getMatcher() ?? '/^' . preg_quote($menu->getPath(), '/') . '/',
-                $path ?? $this->requestStack->getCurrentRequest()->getPathInfo(),
+                $this->getCurrentPath(),
             )
         );
     }
 
+    private function url(Csmenu $menu): string
+    {
+        $path = $menu->getPath();
+
+        return '#' === ($path[0] ?? '#') ? ($path ?? '#') : $this->urlHelper->getRelativePath($path);
+    }
+
     private function active(Csmenu $menu, array $children): bool
     {
-        return (
+        return $this->activable && (
             $this->isMatch($menu)
             || Utils::some($children, static fn (array $child) => $child['active'])
+        );
+    }
+
+    private function getCurrentPath(): string
+    {
+        return $this->currentPath ?? (
+            $this->currentPath = $this->requestStack->getCurrentRequest()->getPathInfo()
         );
     }
 }
