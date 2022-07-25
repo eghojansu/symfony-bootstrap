@@ -1,4 +1,12 @@
 # used by controller handler
-/: main.home
-/about: main.about
-/login: main.login
+/:
+    name: home
+    view: main.home
+/about:
+    name: about
+    view: main.about
+
+# dashboard
+/dashboard:
+    name: dashboard
+    view: dashboard.home

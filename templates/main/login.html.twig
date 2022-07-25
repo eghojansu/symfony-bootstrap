@@ -1,13 +1,18 @@
 {% extends 'base.html.twig' %}
 {% set bodyclass = 'text-center body-gray' %}
+{% import 'shared/alert.html.twig' as alert %}
 {% block body %}
 <div class="vh-100 d-flex align-items-center justify-content-center">
-  <form data-controller="form" method="post" autocomplete="off" class="form-signin">
+  <form method="post" autocomplete="off" class="form-signin">
     <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
 
+    {% if error %}
+      {{ alert.show(error.messageKey|trans(error.messageData, 'security')) }}
+    {% endif %}
+
     <div class="form-floating">
-      <input required name="_userid" type="text" class="form-control" id="txtUserid" placeholder="Username or email">
-      <label for="txtUserid">Username or email</label>
+      <input required name="_username" type="text" class="form-control" id="txtUsername" placeholder="Username or email" value="{{ username }}">
+      <label for="txtUsername">Username or email</label>
     </div>
     <div class="form-floating">
       <input required name="_password" type="password" class="form-control" id="txtPassword" placeholder="Password">

@@ -4,7 +4,7 @@ namespace App\Extension;
 
 final class Utils
 {
-    public static function className(string $class): string
+    public static function className($class): string
     {
         return ltrim(
             strrchr(
@@ -15,6 +15,55 @@ final class Utils
         );
     }
 
+    public static function classToName($class, string $case = 'snake'): string
+    {
+        $doCase = self::class . '::case' . $case;
+
+        return $doCase(self::className($class));
+    }
+
+    public static function caseJoin(string $str, string $glue = '', bool $lowerFirst = false): string
+    {
+        return preg_replace_callback(
+            '/(^\w|[A-Z]|\b\w)|([\W_]+)/',
+            static function (array $match) use ($glue, $lowerFirst) {
+                if (isset($match[2])) {
+                    return $glue;
+                }
+
+                list($part, $pos) = $match[1];
+
+                if (0 === $pos) {
+                    return $lowerFirst ? strtolower($part) : $part;
+                }
+
+                return ctype_upper($part) ? $glue . $part : strtoupper($part);
+            },
+            $str,
+            flags: PREG_OFFSET_CAPTURE,
+        );
+    }
+
+    public static function caseTitle(string $str): string
+    {
+        return self::caseJoin($str, ' ');
+    }
+
+    public static function caseCamel(string $str): string
+    {
+        return self::caseJoin($str, '', true);
+    }
+
+    public static function caseKebab(string $str): string
+    {
+        return strtolower(self::caseJoin($str, '-'));
+    }
+
+    public static function caseSnake(string $str): string
+    {
+        return strtolower(self::caseJoin($str, '_'));
+    }
+
     public static function split(string|array|null $str, string $pattern = null): array
     {
         return is_array($str) ? $str : array_map(
@@ -23,7 +72,7 @@ final class Utils
         );
     }
 
-    public static function flatten(string|array|null ...$args): array
+    public static function merge(string|array|null ...$args): array
     {
         return array_merge(...array_map(static fn ($arg) => self::split($arg), $args));
     }

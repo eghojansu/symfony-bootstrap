@@ -1,0 +1,23 @@
+{% macro menu(items) %}
+  <ul>
+    {% for item in items %}
+      <li class="nav-item {{ item.has_child ? 'dropdown' : '' }}">
+        <a class="nav-link {{ item.has_child ? 'dropdown-toggle' : '' }}" href="{{ item.has_child ? '#' : item.path }}" {{ item.has_child ? 'role="button" data-bs-toggle="dropdown" aria-expanded="false"' : '' }}>
+          {{ item.text }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro dropdown(items) %}
+  <ul class="dropdown-menu">
+    {% for item in items %}
+
+      <li><a class="dropdown-item" href="#">Action</a></li>
+    {% endfor %}
+    <li><a class="dropdown-item" href="#">Another action</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="#">Something else here</a></li>
+  </ul>
+{% endmacro %}

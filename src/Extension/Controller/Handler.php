@@ -21,7 +21,7 @@ class Handler
     public function handle(Request $request, array $static): Response
     {
         if (isset($static['action'])) {
-            return $this->getAction($static['action'])->handle($request);
+            return $this->getAction($static['action'])->handle($this->context, $request);
         }
 
         return $this->context->render($static['view']);;

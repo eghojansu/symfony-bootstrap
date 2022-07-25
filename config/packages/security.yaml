@@ -16,7 +16,7 @@ security:
             provider: app_users
             form_login:
                 enable_csrf: true
-                login_path: ac_login
+                login_path: login
                 check_path: login
 
             # activate different ways to authenticate
@@ -28,7 +28,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/(login)?$, roles: PUBLIC_ACCESS }
+        - { path: ^/(login|about)?$, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 
     role_hierarchy:

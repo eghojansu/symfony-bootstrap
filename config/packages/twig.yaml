@@ -2,6 +2,7 @@ twig:
     default_path: '%kernel.project_dir%/templates'
     globals:
         project: '@App\Project'
+        menu: '@App\Extension\RBAC\Menu'
 
 when@test:
     twig:
