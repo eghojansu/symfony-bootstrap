@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+
+{% set _body = { full: true, center: true }|merge(_body ?? {}) %}
+{% block body %}
+  <div class="{{ (_body.fluid ?? null) ? 'container-fluid' : 'container' }}">
+    {% block content %}Voila!{% endblock %}
+  </div>
+{% endblock %}

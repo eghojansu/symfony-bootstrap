@@ -13,7 +13,7 @@
     {{ encore_entry_script_tags('app') }}
   {% endblock %}
 </head>
-<body {% block bodyprops %}{% if bodyclass is defined %}class="{{ bodyclass }}"{% endif %}{% endblock %}>
+<body {{ with_props(_body.props ?? null, (_body.class ?? null) ? { class: _body.class } : null, { class: { 'body-gray': _body.gray ?? null, 'vh-100': _body.full ?? null, 'd-flex': _body.flex ?? _body.center ?? null, 'align-items-center justify-content-center': _body.center ?? null } }) }}>
   {% block body %}{% endblock %}
 </body>
 </html>
