@@ -1,0 +1,21 @@
+{% extends 'dashboard.html.twig' %}
+{% import 'shared/tree.html.twig' as tree %}
+{% import 'shared/button.html.twig' as button %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="row">
+      <div class="col">
+        <div class="fs-5">{{ _panel.title ?? 'Panel' }}</div>
+      </div>
+      {% if _panel.toolbars is defined %}<div class="col">{{ button.toolbar(_panel.toolbars, true) }}</div>{% endif %}
+    </div>
+
+    {% if _panel.nav is defined %}{{ tree.nav(_panel.nav, _panel.active_url ?? app.request.pathInfo, 'nav-tabs card-header-tabs mt-3') }}{% endif %}
+  </div>
+  <div class="card-body">
+    {% block panel %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

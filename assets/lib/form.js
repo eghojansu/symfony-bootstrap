@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
-import { createElement } from './common'
+import { createElement } from './dom'
 import { request } from './shared'
 import notify from './notify'
 
@@ -146,20 +146,18 @@ export default class extends Controller {
     }
 
     if (success) {
-      const responded = await this.afterSubmit(args)
+      const responseHandled = await this.afterSubmit(args)
 
-      if (!responded) {
+      if (!responseHandled) {
         notify(message || 'Data has been submitted', true, {
           title: 'Successful'
         })
 
-        const successful = await this.afterSuccess(args)
+        const successHandled = await this.afterSuccess(args)
 
-        if (!successful) {
+        if (!successHandled) {
           if (data?.redirect) {
-            setTimeout(() => {
-              window.location.assign(data.redirect)
-            }, 1200)
+            setTimeout(() => window.location.assign(data.redirect), 1200)
           } else if (data?.refresh) {
             setTimeout(() => window.location.reload(), 1200)
           }

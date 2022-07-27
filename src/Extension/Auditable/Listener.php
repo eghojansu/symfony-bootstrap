@@ -3,7 +3,7 @@
 namespace App\Extension\Auditable;
 
 use App\Entity\Csuser;
-use App\Extension\ControllerContext;
+use App\Service\Account;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 class Listener
 {
     public function __construct(
-        private ControllerContext $context,
+        private Account $account,
     ) {}
 
     public function onFlush(OnFlushEventArgs $args)
@@ -22,14 +22,19 @@ class Listener
         $em = $args->getEntityManager();
         $uow = $em->getUnitOfWork();
         $now = new \DateTime();
-        $user = $this->context->user();
+        $user = $this->account->fullUser();
 
         foreach ($uow->getScheduledEntityInsertions() as $entity) {
             if ($entity instanceof AuditableInterface && $entity->isAuditable()) {
                 $meta = $em->getClassMetadata(get_class($entity));
 
                 $this->touch($entity, $user, $now);
-                $uow->recomputeSingleEntityChangeSet($meta, $entity);
+
+                if ($uow->getEntityChangeSet($entity)) {
+                    $uow->recomputeSingleEntityChangeSet($meta, $entity);
+                } else {
+                    $uow->computeChangeSet($meta, $entity);
+                }
             }
         }
 
@@ -38,7 +43,12 @@ class Listener
                 $meta = $em->getClassMetadata(get_class($entity));
 
                 $this->touchUpdate($entity, $user, $now);
-                $uow->recomputeSingleEntityChangeSet($meta, $entity);
+
+                if ($uow->getEntityChangeSet($entity)) {
+                    $uow->recomputeSingleEntityChangeSet($meta, $entity);
+                } else {
+                    $uow->computeChangeSet($meta, $entity);
+                }
             }
         }
 

@@ -1,0 +1,6 @@
+{% extends 'account/base.html.twig' %}
+{% import 'shared/form.html.twig' as formRender %}
+
+{% block panel %}
+  {{ formRender.grid(form, { grid: 3 }) }}
+{% endblock %}

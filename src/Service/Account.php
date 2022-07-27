@@ -4,22 +4,38 @@ namespace App\Service;
 
 use App\Entity\Cshist;
 use App\Entity\Csuser;
-use App\Extension\ControllerContext;
 use App\Form\AccountType;
 use App\Form\AccountPasswordType;
+use App\Extension\ControllerContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class Account
 {
+    /** @var Csuser */
+    private $user;
+
     public function __construct(
         private EntityManagerInterface $em,
         private UserPasswordHasherInterface $passwordHasher,
         private TokenStorageInterface $tokenStorage,
-        private ControllerContext $context,
+        private RequestStack $requestStack,
     ) {}
+
+    public function user(): Csuser|null
+    {
+        return $this->tokenStorage->getToken()?->getUser();
+    }
+
+    public function fullUser(): Csuser|null
+    {
+        return $this->user ?? (
+            $this->user = ($user = $this->user()) ? $this->em->getRepository(Csuser::class)->find($user->getId()) : null
+        );
+    }
 
     public function record(
         string $activity,
@@ -28,7 +44,7 @@ class Account
         Csuser $user = null,
         Request $request = null,
     ): Cshist {
-        $req = $request ?? $this->context->request();
+        $req = $request ?? $this->requestStack->getCurrentRequest();
         $info = sprintf('%s %s', $req->getMethod(), $req->getPathInfo());
 
         $history = new Cshist();
@@ -38,7 +54,7 @@ class Account
         $history->setIp($req->getClientIp());
         $history->setAgent($req->headers->get('User-Agent'));
         $history->setRequest($info);
-        $history->setUser($user ?? $this->context->user());
+        $history->setUser($user ?? $this->fullUser());
         $history->setRecordDate(new \DateTime());
 
         $this->em->persist($history);

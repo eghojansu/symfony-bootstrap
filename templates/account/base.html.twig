@@ -1,0 +1,11 @@
+{% extends 'dashboard_panel.html.twig' %}
+
+{% set _panel = {
+  title: _title ?? 'Account',
+  nav: [
+    {
+      text: 'Home',
+      url: path('account'),
+    }
+  ],
+}|merge(_panel ?? {}) %}

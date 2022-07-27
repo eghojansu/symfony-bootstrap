@@ -1,0 +1,25 @@
+{% macro toolbar(groups, end = false, label = 'Toolbar', size = '', class = '') %}
+<div {{ with_props({ class: { 'btn-toolbar': true, 'justify-content-end': end }, role: 'toolbar', 'aria-label': label }, { class: class }) }}>
+  {% for label, group in groups %}{{ _self.group(group, label, size, loop.last ? '' : 'me-2') }}{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro group(items, label = 'Group', size = '', class = '') %}
+<div {{ with_props({ class: ['btn-group', class], role: 'group', 'aria-label': label }) }}>
+  {% for label, item in items %}{{ _self.render(item, label) }}{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro render(button, label, icon) %}
+{% import 'shared/common.html.twig' as common %}
+  {% set props = { class: ['btn', 'btn-' ~ (button.variant ?? 'secondary'), (button.size ?? null) ? 'btn-' ~ button.size : null] } %}
+  {% if 'url' in button or 'a' == (button.type ?? null) %}
+    <a {{ with_props({ href: button.url ?? '#' }, props, button.props ?? null) }}>
+      {{ common.label(label ?? button.text ?? 'Link', icon ?? button.icon) }}
+    </a>
+  {% else %}
+    <button {{ with_props(props, button.props ?? null) }}>
+      {{ common.label(label ?? button.text ?? 'Button', icon ?? button.icon) }}
+    </button>
+  {% endif %}
+{% endmacro %}

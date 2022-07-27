@@ -1,0 +1,3 @@
+{% macro label(text, iconStart, iconEnd) -%}
+{% if iconStart %}<i class="bi-{{ iconStart }}"></i> {% endif %}{{ text }}{% if iconEnd %} <i class="bi-{{ iconEnd }}"></i>{% endif %}
+{%- endmacro %}

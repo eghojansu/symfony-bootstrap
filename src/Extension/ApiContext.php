@@ -65,7 +65,7 @@ final class ApiContext
         mixed $data = null,
         array $headers = null,
     ): JsonResponse {
-        return $this->done(__FUNCTION__, $action, $data, $headers);
+        return $this->done(__FUNCTION__, $action, $data, $headers, true);
     }
 
     public function removed(
@@ -73,14 +73,15 @@ final class ApiContext
         mixed $data = null,
         array $headers = null,
     ): JsonResponse {
-        return $this->done(__FUNCTION__, $action, $data, $headers);
+        return $this->done(__FUNCTION__, $action, $data, $headers, true);
     }
 
     public function done(
-        string $done,
+        string $message,
         string|array|bool $action = null,
         mixed $data = null,
         array $headers = null,
+        bool $isData = false,
     ): JsonResponse {
         $add = array();
 
@@ -94,7 +95,7 @@ final class ApiContext
 
         return $this->data(
             ($data ?? array()) + $add,
-            'Data has been ' . $done,
+            $isData ? 'Data has been ' . $message : $message,
             true,
             null,
             $headers,

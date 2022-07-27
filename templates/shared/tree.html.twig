@@ -1,40 +1,39 @@
-{% macro menu(items, class = 'nav', dropEnd = false, append = '') %}
+{% macro nav(items, active_url = '', append = '', dropEnd = false, class = 'nav') %}
+{% import 'shared/common.html.twig' as common %}
 <ul {{ with_class([class, append]) }}>
-  {% for item in items %}
-    <li {{ with_class(['nav-item'], { dropdown: item.has_child }) }}>
-      <a {{ with_props({ href: item.url ?? '#', class: 'nav-link' }, item.has_child ? { class: 'dropdown-toggle', href: '#', role: 'button', 'data-bs-toggle': 'dropdown', 'aria-expanded': 'false' } : null, item.attrs) }}>
-        {{ _self.label(item.text, item.icon) }}
+  {% for text, item in items %}
+    <li {{ with_class(['nav-item'], { dropdown: item.has_child ?? null }) }}>
+      <a {{ with_props({ href: item.url ?? '#', class: 'nav-link' }, (item.active ?? ((item.url ?? '#') == active_url)) ? { class: 'active', 'aria-current': 'true' } : null, (item.has_child ?? null) ? { class: 'dropdown-toggle', href: '#', role: 'button', 'data-bs-toggle': 'dropdown', 'aria-expanded': 'false' } : null, item.attrs ?? null) }}>
+        {{ common.label(item.text ?? text, item.icon ?? null) }}
       </a>
-      {% if item.has_child %}{{ _self.dropdown(item.items, dropEnd) }}{% endif %}
+      {% if item.has_child ?? null %}{{ _self.dropdown(item.items, dropEnd) }}{% endif %}
     </li>
   {% endfor %}
 </ul>
 {% endmacro %}
 
 {% macro dropdown(items, dropEnd = false) %}
+{% import 'shared/common.html.twig' as common %}
 <ul {{ with_class('dropdown-menu', { 'dropdown-menu-end': dropEnd }) }}>
-  {% for item in items %}
+  {% for text, item in items %}
     <li>
       <a {{ with_props({ href: item.url ?? '#', class: 'dropdown-item' }, item.attrs)}}>
-        {{ _self.label(item.text, item.icon) }}
+        {{ common.label(item.text ?? text, item.icon ?? null) }}
       </a>
     </li>
   {% endfor %}
 </ul>
 {% endmacro %}
 
-{% macro label(text, iconStart, iconEnd) -%}
-{% if iconStart %}<i class="bi-{{ iconStart }}"></i> {% endif %}{{ text }}{% if iconEnd %} <i class="bi-{{ iconEnd }}"></i>{% endif %}
-{%- endmacro %}
-
 {% macro list(items, flush, class, id) %}
+{% import 'shared/common.html.twig' as common %}
 <div {{ with_props({ 'id': id, class: ['list-group', class] }, { class: { 'list-group-flush': flush }}) }}>
   {% for item in items %}
     <a {{ with_props({ href: item.url ?? '#', class: 'list-group-item list-group-item-action' }, item.active ? { class: 'active', 'aria-current': 'true' } : null, item.has_child ? { href: '#list-group-' ~ item.id, class: 'd-flex', 'data-bs-toggle': 'collapse', 'aria-current': 'true', 'aria-expanded': 'false', 'aria-controls': 'list-group-' ~ item.id } : null) }}>
       {% if item.has_child %}
-        <span>{{ _self.label(item.text, item.icon) }}</span> <i class="bi-caret-down ms-auto"></i>
+        <span>{{ common.label(item.text, item.icon) }}</span> <i class="bi-caret-down ms-auto"></i>
       {% else %}
-        {{ _self.label(item.text, item.icon) }}
+        {{ common.label(item.text, item.icon) }}
       {% endif %}
     </a>
     {% if item.has_child %}{{ _self.list(item.items, flush, 'collapse', 'list-group-' ~ item.id) }}{% endif %}

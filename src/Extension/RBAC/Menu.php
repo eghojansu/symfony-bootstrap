@@ -7,7 +7,6 @@ use App\Extension\Utils;
 use App\Repository\CsmenuRepository;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\UrlHelper;
 
 final class Menu
 {
@@ -23,7 +22,6 @@ final class Menu
         private CsmenuRepository $repo,
         private RequestStack $requestStack,
         private Security $security,
-        private UrlHelper $urlHelper,
         private bool $prefixPath = true,
         private bool $activable = true,
     ) {}
@@ -248,9 +246,7 @@ final class Menu
 
     private function url(Csmenu $menu): string
     {
-        $path = $menu->getPath();
-
-        return '#' === ($path[0] ?? '#') ? ($path ?? '#') : $this->urlHelper->getRelativePath($path);
+        return $menu->getPath() ?? '#';
     }
 
     private function active(Csmenu $menu, array $children): bool

@@ -1,0 +1,12 @@
+{% macro grid(form, opt) %}
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+{{ form_start(form, (opt.attr ?? {})|merge({
+  attr: {
+    class: ('row g-' ~ (opt.grid ?? 3) ~ ' ' ~ (opt.attr ?? ''))|trim,
+  },
+})) }}
+{% for row in form %}
+{{ form_row(row) }}
+{% endfor %}
+{{ form_end(form) }}
+{% endmacro %}

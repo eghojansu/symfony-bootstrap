@@ -1,5 +1,5 @@
 import Swal from 'sweetalert2'
-import { getColor } from './common'
+import { getColor } from './dom'
 
 export default notify
 
@@ -24,18 +24,18 @@ export const Toast = Swal.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  timer: 3500,
+  timer: 1500,
   didOpen: toast => {
     toast.addEventListener('mouseenter', Swal.stopTimer)
     toast.addEventListener('mouseleave', Swal.resumeTimer)
   },
 })
 
-function notify(message, success, options = {}) {
+function notify(text, success, options = {}) {
   Toast.fire({
-    text: message,
+    text,
     icon: success ? 'success' : 'error',
-    title: 'Notification',
+    titleText: success ? 'Success' : 'Failure',
     ...options,
   })
 }
