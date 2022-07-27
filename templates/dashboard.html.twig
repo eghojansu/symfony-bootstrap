@@ -25,7 +25,7 @@
       {{ tree.list(menu.root('db'), true) }}
     </div>
   </nav>
-  <div class="bg-info">
-    Content
+  <div {{ with_class(['body-content', _db.class ?? null, (_db.x ?? true) ? 'px-' ~ (_db.x ?? 3) : null, (_db.y ?? true) ? 'py-' ~ (_db.y ?? 3) : null], ) }}>
+    {% block content %}{% endblock %}
   </div>
 {% endblock %}

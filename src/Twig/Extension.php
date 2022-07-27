@@ -72,7 +72,7 @@ final class Extension extends AbstractExtension
                 $expr = true;
             }
 
-            if ($expr) {
+            if ($class && $expr) {
                 $line .= ' ' . $class;
             }
         }
