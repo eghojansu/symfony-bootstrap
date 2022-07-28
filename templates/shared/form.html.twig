@@ -1,12 +1,112 @@
-{% macro grid(form, opt) %}
-{% form_theme form 'bootstrap_5_layout.html.twig' %}
-{{ form_start(form, (opt.attr ?? {})|merge({
-  attr: {
-    class: ('row g-' ~ (opt.grid ?? 3) ~ ' ' ~ (opt.attr ?? ''))|trim,
-  },
-})) }}
-{% for row in form %}
-{{ form_row(row) }}
-{% endfor %}
-{{ form_end(form) }}
-{% endmacro %}
+{% use 'bootstrap_5_layout.html.twig' %}
+
+{%- block form -%}
+  {%- set childProps = {
+    formProps: {
+      grid: grid ?? 3,
+      width: width ?? 4,
+      break: break ?? true,
+      controller: controller ?? 'form',
+      flashes: flashes ?? true,
+      controls: controls ?? [
+        {
+          type: 'submit',
+          variant: 'primary',
+          icon: 'check2-circle',
+          text: saveText ?? 'Save',
+          spinner: true,
+        },
+        {
+          type: 'reset',
+          url: cancelUrl ?? null,
+          icon: 'x-circle',
+          text: cancelText ?? 'Cancel',
+          class: 'ms-3',
+        },
+      ]|merge(extraControls ?? []),
+    },
+  } -%}
+  {{ form_start(form, childProps) }}
+    {{- form_widget(form, childProps) -}}
+  {{ form_end(form, childProps) }}
+{%- endblock form -%}
+
+{%- block form_start -%}
+  {%- set attr = attr|merge({
+    class: ((attr.class ?? null) ~ (formProps.grid ? ' row g-' ~ formProps.grid : null))|trim,
+    'data-controller': formProps.controller,
+  }) -%}
+  {{ parent() }}
+{%- endblock -%}
+
+{%- block form_end -%}
+  {%- set childProps = { formProps: formProps } -%}
+  {%- if not render_rest is defined or render_rest -%}
+    {{ form_rest(form, childProps) }}
+  {%- endif -%}
+  </form>
+{%- endblock form_end -%}
+
+{%- block form_rest -%}
+  {% import 'shared/button.html.twig' as button %}
+  {%- set childProps = { formProps: formProps } -%}
+  {% for child in form -%}
+    {% if not child.rendered %}
+      {{- form_row(child, childProps) -}}
+    {% endif %}
+  {%- endfor -%}
+
+  {% if not form.methodRendered and form is rootform %}
+    {%- do form.setMethodRendered() -%}
+    {% set method = method|upper %}
+    {%- if method in ["GET", "POST"] -%}
+      {% set form_method = method %}
+    {%- else -%}
+      {% set form_method = "POST" %}
+    {%- endif -%}
+
+    {%- if form_method != method -%}
+      <input type="hidden" name="_method" value="{{ method }}" />
+    {%- endif -%}
+  {% endif -%}
+
+  {% if form is rootform and formProps.grid and (render_action ?? false) %}
+    <div class="col-12">
+      {% for action in formProps.controls %}
+        {{ button.render(action) }}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock form_rest %}
+
+{%- block form_rows -%}
+  {%- set childProps = { formProps: formProps } -%}
+  {% for child in form|filter(child => not child.rendered) %}
+    {{- form_row(child, childProps) -}}
+  {% endfor %}
+{%- endblock form_rows -%}
+
+{%- block form_row -%}
+  {%- if formProps.grid -%}
+    {%- set row_class = 'col-' ~ (row_attr.width ?? formProps.width) -%}
+    {%- set row_attr = row_attr|merge({ width: false }) -%}
+  {%- endif -%}
+  {{ parent() }}
+  {%- if formProps.grid and (row_attr.break ?? formProps.break) -%}<div class="w-100"></div>{%- endif -%}
+{%- endblock -%}
+
+{%- block form_widget_compound -%}
+  {% import 'shared/alert.html.twig' as alert %}
+  {%- set childProps = { formProps: formProps } -%}
+  {%- if form is rootform -%}
+    {{ form_errors(form) }}
+    {% if formProps.flashes -%}{{ alert.messages() }}{%- endif %}
+    {{- block('form_rows') -}}
+    {{- form_rest(form, childProps|merge({ render_action: true })) -}}
+  {%- else -%}
+    <div {{ block('widget_container_attributes') }}>
+      {{- block('form_rows') -}}
+      {{- form_rest(form, childProps) -}}
+    </div>
+  {%- endif -%}
+{%- endblock form_widget_compound -%}

@@ -8,13 +8,12 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class AccountType extends AbstractType
+class AccountPasswordType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name')
-            ->add('email')
+            ->add('newPassword', PasswordType::class)
             ->add('currentPassword', PasswordType::class)
         ;
     }
@@ -23,7 +22,7 @@ class AccountType extends AbstractType
     {
         $resolver->setDefaults(array(
             'data_class' => Csuser::class,
-            'validation_groups' => array('profile', 'current_user'),
+            'validation_groups' => array('password', 'current_user'),
         ));
     }
 }

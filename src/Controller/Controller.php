@@ -2,20 +2,25 @@
 
 namespace App\Controller;
 
+use App\Entity\Csuser;
+use App\Service\Account;
 use App\Extension\ApiContext;
-use Symfony\Component\Form\FormInterface;
+use App\Extension\ControllerContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 /**
+ * @property Csuser $user
+ * @property Account $account
  * @property ApiContext $api
+ * @property ControllerContext $context
  */
 abstract class Controller extends AbstractController
 {
-    protected function view(string $path, array $parameters = null): Response
+    protected function view(string $view, array $parameters = null, Response $response = null): Response
     {
-        return $this->render($this->viewFile($path), $parameters ?? array());
+        return $this->context->render($view, $parameters, $response);
     }
 
     protected function form(
@@ -23,45 +28,14 @@ abstract class Controller extends AbstractController
         string $type,
         object|array $data = null,
         callable|bool $persist = false,
+        string|array|bool $action = null,
         array $parameters = null,
         array $options = null,
-        Request &$request = null,
+        Request $request = null,
+        Response $response = null,
+        string|bool $activity = null,
     ): Response {
-        /** @var Request */
-        $req = $request ?? $this->container->get('request_stack')->getCurrentRequest();
-        $form = $this->createForm($type, $data, $options ?? array());
-        $form->handleRequest($req);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $action = 'saved';
-
-            if ($persist) {
-                if (is_callable($persist)) {
-                    $action = $persist($data, $this->em, $form);
-                } else {
-                    $this->em->persist($data);
-                }
-            }
-
-            if ($action instanceof Response) {
-                return $action;
-            }
-
-            if ('json' === $req->getPreferredFormat()) {
-                return $this->api->done(...(is_array($action) ? $action : array('save', $action)));
-            }
-        }
-
-        return $this->renderForm($this->viewFile($view), ($parameters ?? array()) + compact('form'));
-    }
-
-    protected function viewFile(string $path): string
-    {
-        if (str_ends_with($path, '.twig')) {
-            return $path;
-        }
-
-        return str_replace('.', '/', $path) . '.html.twig';
+        return $this->context->renderForm($view, $type, $data, $persist, $action, $parameters, $options, $request, $response, $activity);
     }
 
     protected static function subscribe(): array
@@ -72,13 +46,15 @@ abstract class Controller extends AbstractController
     public static function getSubscribedServices(): array
     {
         return self::subscribe() + parent::getSubscribedServices() + array(
+            'account' => Account::class,
             'api' => ApiContext::class,
+            'context' => ControllerContext::class,
         );
     }
 
     public function __get($name)
     {
-        if (method_exists($this, $get = '_' . ltrim($name, '_'))) {
+        if (method_exists($this, $get = 'get' . $name)) {
             return $this->$get();
         }
 

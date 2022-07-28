@@ -1,0 +1,42 @@
+{% macro render(columns, items, options = {}) %}
+  {% set numbering = options.numbering ?? true %}
+  {% set colspan = (columns|length) + 1 %}
+  <table {{ with_props({ class: { 'table': true, 'table-bordered': options.bordered ?? true, 'table-striped': options.striped ?? true, 'table-hover': options.hover ?? true, 'table-sm': options.sm ?? false } }) }}>
+    <thead>
+      <tr>
+        {% if numbering %}<th class="wpx-50">#</th>{% endif %}
+        {% for name, column in columns %}
+          <th>
+            {% if column is scalar %}
+              {{ name is numeric ? column|caseTitle : name }}
+            {% elseif name is numeric %}
+              {{ column.text ?? column.name|caseTitle }}
+            {% else %}
+              {{ column.text ?? (column.name ?? name)|caseTitle }}
+            {% endif %}
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          {% if numbering %}<td>{{ loop.index }}</td>{% endif %}
+          {% for name, column in columns %}
+            <td>
+              {% if column is scalar %}
+                {{ attribute(item, name is numeric ? column : name)|tableFormat }}
+              {% elseif name is numeric %}
+                {{ attribute(item, column.name)|tableFormat(column.format ?? null) }}
+              {% else %}
+                {{ attribute(item, column.name ?? name)|tableFormat(column.format ?? null) }}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% else %}
+        <tr><td colspan="{{ colspan }}" class="fst-italic">No data available</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}

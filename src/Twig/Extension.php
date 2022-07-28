@@ -2,9 +2,11 @@
 
 namespace App\Twig;
 
+use Twig\TwigTest;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
 use App\Extension\Utils;
 use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 
 final class Extension extends AbstractExtension
 {
@@ -14,6 +16,36 @@ final class Extension extends AbstractExtension
             new TwigFunction('with_props', array($this, 'withProps'), array('is_safe' => array('html'))),
             new TwigFunction('with_class', array($this, 'withClass'), array('is_safe' => array('html'))),
         );
+    }
+
+    public function getFilters()
+    {
+        return array(
+            new TwigFilter('caseTitle', array(Utils::class, 'caseTitle')),
+            new TwigFilter('caseKebab', array(Utils::class, 'caseKebab')),
+            new TwigFilter('caseSnake', array(Utils::class, 'caseSnake')),
+            new TwigFilter('caseCamel', array(Utils::class, 'caseCamel')),
+            new TwigFilter('tableFormat', array($this, 'tableFormat')),
+        );
+    }
+
+    public function getTests()
+    {
+        return array(
+            new TwigTest('numeric', static fn($value) => is_numeric($value)),
+            new TwigTest('scalar', static fn($value) => is_scalar($value)),
+        );
+    }
+
+    public function tableFormat($value, string $format = null): string|int|float|null
+    {
+        return match (true) {
+            $value instanceof \DateTimeInterface => match ($format) {
+                'date' => $value->format('d M Y'),
+                default => $value->format($format ?? 'd F Y H:i:s'),
+            },
+            default => $value,
+        };
     }
 
     public function withProps(array|null ...$props): string

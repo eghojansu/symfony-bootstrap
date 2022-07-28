@@ -1,0 +1,10 @@
+{% extends 'account/base.html.twig' %}
+{% import 'shared/table.html.twig' as table %}
+
+{% set _title = 'Latest Activities' %}
+{% block panel %}
+  {{ table.render([
+    { name: 'name' },
+    { name: 'recordDate' },
+  ], items) }}
+{% endblock %}

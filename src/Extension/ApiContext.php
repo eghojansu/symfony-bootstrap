@@ -2,6 +2,7 @@
 
 namespace App\Extension;
 
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,14 @@ final class ApiContext
         array $headers = null,
         array $context = null,
     ): JsonResponse {
-        $json = $this->serializer->serialize($data, 'json', array_merge(array(
-            'json_encode_options' => JsonResponse::DEFAULT_ENCODING_OPTIONS,
-        ), $context ?? array()));
-
-        return new JsonResponse($json, $status ?? Response::HTTP_OK, $headers ?? array(), true);
+        return new JsonResponse(
+            $this->serializer->serialize($data, 'json', array_merge(array(
+                'json_encode_options' => JsonResponse::DEFAULT_ENCODING_OPTIONS,
+            ), $context ?? array())),
+            $status ?? Response::HTTP_OK,
+            $headers ?? array(),
+            true,
+        );
     }
 
     public function source(
@@ -32,9 +36,7 @@ final class ApiContext
         string $message = null,
         array $headers = null,
     ): JsonResponse {
-        $payload = array_filter(compact('message', 'items'));
-
-        return $this->json($payload, null, $headers);
+        return $this->json(compact('message', 'items'), null, $headers);
     }
 
     public function data(
@@ -44,10 +46,13 @@ final class ApiContext
         int $code = null,
         array $headers = null,
     ): JsonResponse {
-        $payload = compact('success') + array_filter(compact('message', 'data'));
-        $status = $code ?? ($success ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        return $this->json($payload, $status, $headers);
+        return $this->json(
+            compact('success') + array_filter(compact('message') + array(
+                $success ? 'data' : 'errors' => $data,
+            )),
+            $code ?? ($success ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY),
+            $headers,
+        );
     }
 
     public function message(
@@ -83,22 +88,51 @@ final class ApiContext
         array $headers = null,
         bool $isData = false,
     ): JsonResponse {
-        $add = array();
-
-        if (is_bool($action)) {
-            $add['refresh'] = $action;
-        } elseif (is_string($action)) {
-            $add['redirect'] = $action;
-        } elseif ($action) {
-            $add['redirect'] = $this->router->generate(...$action);
-        }
-
         return $this->data(
-            ($data ?? array()) + $add,
+            ($data ?? array()) + match(true) {
+                is_bool($action) => array('refresh' => $action),
+                is_string($action) => array('redirect' => $action),
+                $action => array('redirect' => $this->router->generate(...$action)),
+                default => array(),
+            },
             $isData ? 'Data has been ' . $message : $message,
             true,
             null,
             $headers,
         );
+    }
+
+    public function formError(
+        FormInterface $form,
+        string $message = null,
+        int $code = null,
+        array $headers = null,
+    ): JsonResponse {
+        return $this->data(
+            self::serializeForm($form),
+            $message ?? 'Please fix error in forms',
+            false,
+            $code,
+            $headers,
+        );
+    }
+
+    private static function serializeForm(FormInterface $form): array
+    {
+        $errors = array();
+
+        foreach ($form->getErrors() as $error) {
+            $errors[] = $error->getMessage();
+        }
+
+        foreach ($form->all() as $childForm) {
+            if ($childForm instanceof FormInterface) {
+                if ($childErrors = static::serializeForm($childForm)) {
+                    $errors[$childForm->getName()] = $childErrors;
+                }
+            }
+        }
+
+        return $errors;
     }
 }

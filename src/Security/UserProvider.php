@@ -41,6 +41,10 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', get_class($user)));
         }
 
+        if ($user->getNewPassword()) {
+            return $this->loadUserByIdentifier($user->getUserIdentifier());
+        }
+
         return $user;
     }
 

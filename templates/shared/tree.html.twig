@@ -4,7 +4,7 @@
   {% for text, item in items %}
     <li {{ with_class(['nav-item'], { dropdown: item.has_child ?? null }) }}>
       <a {{ with_props({ href: item.url ?? '#', class: 'nav-link' }, (item.active ?? ((item.url ?? '#') == active_url)) ? { class: 'active', 'aria-current': 'true' } : null, (item.has_child ?? null) ? { class: 'dropdown-toggle', href: '#', role: 'button', 'data-bs-toggle': 'dropdown', 'aria-expanded': 'false' } : null, item.attrs ?? null) }}>
-        {{ common.label(item.text ?? text, item.icon ?? null) }}
+        {{ common.label(item.text ?? (text is numeric ? null : text), item.icon ?? null) }}
       </a>
       {% if item.has_child ?? null %}{{ _self.dropdown(item.items, dropEnd) }}{% endif %}
     </li>
@@ -18,7 +18,7 @@
   {% for text, item in items %}
     <li>
       <a {{ with_props({ href: item.url ?? '#', class: 'dropdown-item' }, item.attrs)}}>
-        {{ common.label(item.text ?? text, item.icon ?? null) }}
+        {{ common.label(item.text ?? (text is numeric ? null : text), item.icon ?? null) }}
       </a>
     </li>
   {% endfor %}
@@ -31,9 +31,9 @@
   {% for item in items %}
     <a {{ with_props({ href: item.url ?? '#', class: 'list-group-item list-group-item-action' }, item.active ? { class: 'active', 'aria-current': 'true' } : null, item.has_child ? { href: '#list-group-' ~ item.id, class: 'd-flex', 'data-bs-toggle': 'collapse', 'aria-current': 'true', 'aria-expanded': 'false', 'aria-controls': 'list-group-' ~ item.id } : null) }}>
       {% if item.has_child %}
-        <span>{{ common.label(item.text, item.icon) }}</span> <i class="bi-caret-down ms-auto"></i>
+        <span>{{ common.label(item.text ?? null, item.icon) }}</span> <i class="bi-caret-down ms-auto"></i>
       {% else %}
-        {{ common.label(item.text, item.icon) }}
+        {{ common.label(item.text ?? null, item.icon) }}
       {% endif %}
     </a>
     {% if item.has_child %}{{ _self.list(item.items, flush, 'collapse', 'list-group-' ~ item.id) }}{% endif %}

@@ -25,3 +25,11 @@
 {% macro success(message, dismissible = true) %}
   {{ _self.show(message, 'success', dismissible) }}
 {% endmacro %}
+
+{% macro messages() %}
+  {% for type, messages in app.flashes %}
+    {% for message in messages %}
+      {{ _self.show(message, type) }}
+    {% endfor %}
+  {% endfor %}
+{% endmacro %}

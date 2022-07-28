@@ -10,16 +10,21 @@
 </div>
 {% endmacro %}
 
-{% macro render(button, label, icon) %}
+{% macro render(button, label, icon, class) %}
 {% import 'shared/common.html.twig' as common %}
-  {% set props = { class: ['btn', 'btn-' ~ (button.variant ?? 'secondary'), (button.size ?? null) ? 'btn-' ~ button.size : null] } %}
-  {% if 'url' in button or 'a' == (button.type ?? null) %}
+  {% set props = { class: ['btn', 'btn-' ~ (button.variant ?? 'secondary'), (button.size ?? null) ? 'btn-' ~ button.size : null, button.class ?? class] } %}
+  {% if (button.url ?? null) or 'a' == (button.type ?? null) %}
     <a {{ with_props({ href: button.url ?? '#' }, props, button.props ?? null) }}>
-      {{ common.label(label ?? button.text ?? 'Link', icon ?? button.icon) }}
+      {{ common.label(label ?? button.text ?? null, icon ?? button.icon) }}
     </a>
   {% else %}
-    <button {{ with_props(props, button.props ?? null) }}>
-      {{ common.label(label ?? button.text ?? 'Button', icon ?? button.icon) }}
+    <button {{ with_props({ type: button.type ?? 'button' }, props, button.props ?? null, { class: { 'btn-spinner': button.spinner ?? false } }) }}>
+      {% if (button.spinner ?? false) %}
+        <span class="btn-spinner-spin"><span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> {{ button.spinText ?? 'Processing...' }}</span>
+        <span class="btn-spinner-text">{{ common.label(label ?? button.text ?? null, icon ?? button.icon) }}</span>
+      {% else %}
+        {{ common.label(label ?? button.text ?? null, icon ?? button.icon) }}
+      {% endif %}
     </button>
   {% endif %}
 {% endmacro %}

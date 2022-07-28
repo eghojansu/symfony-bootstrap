@@ -36,7 +36,7 @@ export const request = (() => {
       }
 
       if (origin.config?.notify) {
-        notify(response.message, false, { title: response.title })
+        notify(response.message, false, { titleText: response.title })
       }
 
       return Promise.resolve(response)

@@ -46,7 +46,7 @@ final class Utils
 
     public static function caseTitle(string $str): string
     {
-        return self::caseJoin($str, ' ');
+        return ucFirst(self::caseJoin($str, ' '));
     }
 
     public static function caseCamel(string $str): string
