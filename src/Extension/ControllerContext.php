@@ -2,10 +2,13 @@
 
 namespace App\Extension;
 
-use App\Service\Account;
-use Doctrine\ORM\EntityManagerInterface;
 use Twig\Environment;
+use App\Service\Account;
+use Doctrine\ORM\EntityRepository;
+use App\Extension\Auditable\Filter;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -158,6 +161,76 @@ final class ControllerContext
     public function render(string $view, array $parameters = null, Response $response = null): Response
     {
         return ($response ?? new Response())->setContent($this->renderView($view, $parameters));
+    }
+
+    public function paginate(
+        string $entity,
+        array $filters = null,
+        \Closure $modify = null,
+        Request $request = null,
+        int $minPageSize = 15,
+        int $maxPageSize = 75,
+    ): Pagination {
+        $req = $request ?? $this->requestStack->getCurrentRequest();
+        $trash = $req->query->getBoolean('trash');
+        $page = max(1, $req->query->getInt('page'));
+        $size = min($maxPageSize, max($minPageSize, $req->query->getInt('size')));
+        $offset = ($page - 1) * $size;
+        $filtered = null;
+
+        /** @var EntityRepository */
+        $repo = $this->em->getRepository($entity);
+        $qb = $repo->createQueryBuilder('a')->orderBy('a.id');
+
+        if (
+            $trash
+            && is_subclass_of($entity, AuditableInterface::class)
+            && (
+                $this->security->isGranted('ROLE_RESTORE')
+                || $this->security->isGranted('ROLE_DESTROY')
+            )
+        ) {
+            $filtered = $this->em->getFilters()->isEnabled(Filter::NAME);
+            $filtered && $this->em->getFilters()->disable(Filter::NAME);
+
+            $qb->andWhere($qb->expr()->isNotNull('a.deletedAt'));
+        }
+
+        if ($filters) {
+            $pos = 1;
+            $qb->andWhere(
+                $qb->expr()->andX(
+                    ...Utils::map(
+                        $filters,
+                        static function ($value, $key) use ($qb, &$pos) {
+                            list($prop, $opr) = explode(' ', $key) + array(1 => null);
+
+                            if (false === strpos($prop, '.')) {
+                                $prop = 'a.' . $prop;
+                            }
+
+                            return match($opr) {
+                                '<>', '!=' => $qb
+                                    ->setParameter($pos, $value)
+                                    ->expr()->neq($prop, '?' . ($pos++)),
+                                default => $qb
+                                    ->setParameter($pos, $value)
+                                    ->expr()->eq($prop, '?' . ($pos++)),
+                            };
+                        },
+                        false,
+                    ),
+                ),
+            );
+        }
+
+        if ($modify) {
+            $modify($qb);
+        }
+
+        $qb->setFirstResult($offset)->setMaxResults($size);
+
+        return new Pagination(new Paginator($qb), $page, $size);
     }
 
     protected function viewFile(string $path): string

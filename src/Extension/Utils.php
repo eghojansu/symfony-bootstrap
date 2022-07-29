@@ -133,9 +133,9 @@ final class Utils
         return $result;
     }
 
-    public static function find(iterable $items, callable $fn)
+    public static function find(iterable $items, callable $fn, $default = null)
     {
-        return self::some($items, $fn, $found) ? $found['value'] : null;
+        return self::some($items, $fn, $found) ? $found['value'] : $default;
     }
 
     public static function some(iterable $items, callable $fn, array &$found = null): bool
@@ -170,7 +170,7 @@ final class Utils
         return true;
     }
 
-    public static function extract(array $source, array $keys, array &$rest = null): array
+    public static function extract(array|null $source, array $keys, array &$rest = null): array
     {
         $rest = $source;
         $result = array();
@@ -181,7 +181,7 @@ final class Utils
                 $default = null;
             }
 
-            if (isset($rest[$key]) || array_key_exists($key, $rest)) {
+            if ($rest && (isset($rest[$key]) || array_key_exists($key, $rest))) {
                 $result[] = $rest[$key];
 
                 unset($rest[$key]);

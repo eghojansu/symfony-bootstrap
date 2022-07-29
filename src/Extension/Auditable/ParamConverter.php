@@ -56,13 +56,11 @@ class ParamConverter extends DoctrineParamConverter
             throw new AccessDeniedHttpException();
         }
 
-        $filter = 'auditable';
-        $filters = $this->em->getFilters();
-        $enabled = $filters->isEnabled($filter);
+        $enabled = $this->em->getFilters()->isEnabled(Filter::NAME);
 
-        $enabled && $filters->disable($filter);
+        $enabled && $this->em->getFilters()->disable(Filter::NAME);
         $result = parent::apply($request, $configuration);
-        $enabled && $filters->enable($filter);
+        $enabled && $this->em->getFilters()->enable(Filter::NAME);
 
         return $result;
     }

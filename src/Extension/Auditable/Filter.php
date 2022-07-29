@@ -7,6 +7,8 @@ use Doctrine\ORM\Query\Filter\SQLFilter;
 
 class Filter extends SQLFilter
 {
+    const NAME = 'auditable';
+
     /**
      * @return string
      */

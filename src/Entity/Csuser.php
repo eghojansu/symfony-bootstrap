@@ -10,6 +10,7 @@ use App\Extension\Auditable\AuditableTrait;
 use Doctrine\Common\Collections\Collection;
 use App\Extension\ORM\Entity\CurrentUserTrait;
 use App\Extension\Auditable\AuditableInterface;
+use App\Extension\Crud\Resource as Crud;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -19,6 +20,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: CsuserRepository::class)]
 #[UniqueEntity('id', groups: array('create'))]
+#[Crud(path: '/administration/user')]
 class Csuser implements UserInterface, PasswordAuthenticatedUserInterface, AuditableInterface
 {
     #[ORM\Id]
