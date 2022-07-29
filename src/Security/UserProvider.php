@@ -3,6 +3,7 @@
 namespace App\Security;
 
 use App\Entity\Csuser;
+use App\Extension\ControllerContext;
 use App\Repository\CsuserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAccountStatusException;
@@ -18,6 +19,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
     public function __construct(
         private CsuserRepository $repo,
         private EntityManagerInterface $em,
+        private ControllerContext $context,
     ) {}
 
     public function loadUserByIdentifier(string $identifier): UserInterface
@@ -41,11 +43,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', get_class($user)));
         }
 
-        if ($user->getNewPassword()) {
-            return $this->loadUserByIdentifier($user->getUserIdentifier());
-        }
-
-        return $user;
+        return $this->loadUserByIdentifier($user->getUserIdentifier());
     }
 
     public function supportsClass(string $class): bool
