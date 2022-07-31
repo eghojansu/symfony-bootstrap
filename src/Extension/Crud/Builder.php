@@ -27,14 +27,13 @@ final class Builder
         $this->path = $crud->path ?? '/' . Utils::caseKebab($entity);
         $this->defaults = array(
             'crud' => array(
-                'entity' => $entity,
-                'title' => $crud->title,
                 'config' => $crud->config,
-                'template' => $crud->template,
+                'entity' => $entityMetadata->getName(),
                 'jsController' => $crud->jsController,
-                'action' => null,
+                'name' => $this->name,
+                'template' => $crud->template,
+                'title' => $crud->title,
             ),
-            '_controller' => Handler::class . '::handle',
         );
     }
 
@@ -61,7 +60,10 @@ final class Builder
                 array_replace_recursive(
                     $this->defaults,
                     $defaults ?? array(),
-                    array('crud' => array('action' => $action)),
+                    array(
+                        '_controller' => Controller::class . '::' . $action,
+                        'crud' => array('action' => $action),
+                    ),
                 ),
                 $requirements ?? array(),
                 $options ?? array(),

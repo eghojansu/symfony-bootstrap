@@ -14,7 +14,7 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     _instanceof:
-        App\Extension\Crud\ConfiguratorInterface:
+        App\Extension\Crud\Configurator:
             tags: ['app.crud']
 
     # makes classes in src/ available to be used as services
@@ -25,7 +25,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-            - '../src/Extension/Crud/{Accessor,Builder}.php'
+            - '../src/Extension/Crud/Builder.php'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

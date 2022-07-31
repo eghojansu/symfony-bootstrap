@@ -225,7 +225,7 @@ final class ControllerContext
         }
 
         if ($modify) {
-            $modify($qb);
+            $modify($qb, $req);
         }
 
         $qb->setFirstResult($offset)->setMaxResults($size);

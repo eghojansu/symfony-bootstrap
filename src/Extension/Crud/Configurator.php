@@ -2,5 +2,5 @@
 
 namespace App\Extension\Crud;
 
-interface ConfiguratorInterface
+interface Configurator
 {}

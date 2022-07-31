@@ -49,7 +49,8 @@ final class Loader extends BaseLoader
     private function createRoutes(ClassMetadata $meta, Resource $crud): RouteCollection
     {
         $builder = new Builder($meta, $crud, Resource::PATH_PREFIX);
-        $builder->add(Resource::ACTION_INDEX, 'GET');
+
+        $crud->indexable() && $builder->add(Resource::ACTION_INDEX, 'GET');
 
         return $builder->getRoutes();
     }

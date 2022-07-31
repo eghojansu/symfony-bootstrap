@@ -6,7 +6,7 @@ use App\Extension\Utils;
 use Psr\Container\ContainerInterface;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
 
-abstract class BaseConfigurator implements ConfiguratorInterface, ServiceSubscriberInterface
+abstract class AbstractConfigurator implements Configurator, ServiceSubscriberInterface
 {
     public function __construct(private ContainerInterface $container)
     {}
@@ -18,7 +18,11 @@ abstract class BaseConfigurator implements ConfiguratorInterface, ServiceSubscri
 
     public static function getDefaultIndexName(): string
     {
-        return str_replace('_configurator', '', Utils::classToName(static::class));
+        if (str_ends_with(static::class, 'Configurator')) {
+            return Utils::classToName(substr(static::class, 0, -12));
+        }
+
+        return Utils::classToName(static::class);
     }
 
     protected static function subscribe(): array

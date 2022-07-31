@@ -7,6 +7,7 @@
 
 // start the Stimulus application
 import './bootstrap'
+import 'bootstrap'
 
 // load vendor and shared scripts
 import './shared'
