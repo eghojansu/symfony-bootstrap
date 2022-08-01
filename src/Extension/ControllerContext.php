@@ -4,9 +4,12 @@ namespace App\Extension;
 
 use Twig\Environment;
 use App\Service\Account;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\EntityRepository;
 use App\Extension\Auditable\Filter;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\Query\Expr\Comparison;
 use Symfony\Component\Form\FormInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -165,6 +168,7 @@ final class ControllerContext
 
     public function paginate(
         string $entity,
+        array|bool $searchable = null,
         array $filters = null,
         \Closure $modify = null,
         Request $request = null,
@@ -177,6 +181,7 @@ final class ControllerContext
         $size = min($maxPageSize, max($minPageSize, $req->query->getInt('size')));
         $offset = ($page - 1) * $size;
         $filtered = null;
+        $argPos = 0;
 
         /** @var EntityRepository */
         $repo = $this->em->getRepository($entity);
@@ -196,41 +201,81 @@ final class ControllerContext
             $qb->andWhere($qb->expr()->isNotNull('a.deletedAt'));
         }
 
-        if ($filters) {
-            $pos = 1;
-            $qb->andWhere(
-                $qb->expr()->andX(
-                    ...Utils::map(
-                        $filters,
-                        static function ($value, $key) use ($qb, &$pos) {
-                            list($prop, $opr) = explode(' ', $key) + array(1 => null);
+        if ($searchable && $dtFilters = $this->getDataTableFilters($searchable, $qb, $req, $argPos)) {
+            $qb->andWhere($dtFilters);
+        }
 
-                            if (false === strpos($prop, '.')) {
-                                $prop = 'a.' . $prop;
-                            }
-
-                            return match($opr) {
-                                '<>', '!=' => $qb
-                                    ->setParameter($pos, $value)
-                                    ->expr()->neq($prop, '?' . ($pos++)),
-                                default => $qb
-                                    ->setParameter($pos, $value)
-                                    ->expr()->eq($prop, '?' . ($pos++)),
-                            };
-                        },
-                        false,
-                    ),
-                ),
-            );
+        if ($filters && $arrFilters = $this->getDataArrayFilters($filters, $qb, $argPos)) {
+            $qb->andWhere($arrFilters);
         }
 
         if ($modify) {
-            $modify($qb, $req);
+            $modify($qb, $req, $argPos);
         }
 
         $qb->setFirstResult($offset)->setMaxResults($size);
 
-        return new Pagination(new Paginator($qb), $page, $size);
+        return new Pagination(
+            new Paginator($qb),
+            $page,
+            $size,
+            true,
+            $req->query->getInt('draw', 0),
+        );
+    }
+
+    public function getDataArrayFilters(array|null $arrFilters, QueryBuilder $qb, int &$argPost): Expr|null
+    {
+        $pos = 1;
+        $filters = Utils::map(
+            $arrFilters ?? array(),
+            static function ($value, $key) use ($qb, &$pos) {
+                list($prop, $opr) = explode(' ', $key) + array(1 => null);
+
+                if (false === strpos($prop, '.')) {
+                    $prop = 'a.' . $prop;
+                }
+
+                return self::addComparison($qb, $prop, $pos, $value, $opr);
+            },
+            false,
+        );
+
+        return $filters ? $qb->expr()->andX(...$filters) : null;
+    }
+
+    public function getDataTableFilters(array|bool $search, QueryBuilder $qb, Request $request): Expr|null
+    {
+        $filters = array();
+        $keyword = $request->get('search');
+
+        if ($search && is_array($search) && ($keyword['value'] ?? null)) {
+            array_walk($search, static function (string $operation, string|int $field) use ($keyword, $qb) {
+                if (is_numeric($field)) {
+                    $field = $operation;
+                    $operation = '=';
+                }
+            });
+        }
+
+        return $filters ? $qb->expr()->andX(...$filters) : null;
+    }
+
+    public static function addComparison(
+        QueryBuilder $qb,
+        string $prop,
+        int &$argNo,
+        $value,
+        string $operation = null,
+    ): Comparison {
+        return match($operation) {
+            '<>', '!=' => $qb
+                ->setParameter($argNo, $value)
+                ->expr()->neq($prop, '?' . $argNo++),
+            default => $qb
+                ->setParameter($argNo, $value)
+                ->expr()->eq($prop, '?' . $argNo++),
+        };
     }
 
     protected function viewFile(string $path): string

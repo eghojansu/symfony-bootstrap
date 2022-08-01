@@ -32,7 +32,9 @@ final class Loader extends BaseLoader
                 $resource = $resources ? $resources[0]->newInstance() : null;
 
                 if ($resource?->enabled) {
-                    $routes->addCollection($this->createRoutes($meta, $resource));
+                    $routes->addCollection(
+                        (new Builder($meta, $resource, Resource::PATH_PREFIX))->getRoutes(),
+                    );
                 }
 
                 return $routes;
@@ -44,14 +46,5 @@ final class Loader extends BaseLoader
     public function supports(mixed $resource, ?string $type = null): bool
     {
         return 'crud' === $type;
-    }
-
-    private function createRoutes(ClassMetadata $meta, Resource $crud): RouteCollection
-    {
-        $builder = new Builder($meta, $crud, Resource::PATH_PREFIX);
-
-        $crud->indexable() && $builder->add(Resource::ACTION_INDEX, 'GET');
-
-        return $builder->getRoutes();
     }
 }

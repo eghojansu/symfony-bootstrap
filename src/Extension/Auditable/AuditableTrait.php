@@ -4,6 +4,7 @@ namespace App\Extension\Auditable;
 
 use App\Entity\Csuser;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 trait AuditableTrait
 {
@@ -18,14 +19,17 @@ trait AuditableTrait
 
     #[ORM\ManyToOne(Csuser::class)]
     #[ORM\JoinColumn(name: 'creby', referencedColumnName: 'userid')]
+    #[Ignore]
     private $createdBy;
 
     #[ORM\ManyToOne(Csuser::class)]
     #[ORM\JoinColumn(name: 'updby', referencedColumnName: 'userid')]
+    #[Ignore]
     private $updatedBy;
 
     #[ORM\ManyToOne(Csuser::class)]
     #[ORM\JoinColumn(name: 'delby', referencedColumnName: 'userid')]
+    #[Ignore]
     private $deletedBy;
 
     private $auditable = true;

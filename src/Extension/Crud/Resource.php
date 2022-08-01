@@ -18,42 +18,7 @@ final class Resource
         public string|null $title = null,
         public string|null $config = null,
         public string|null $template = null,
-        public string|bool|null $jsController = null,
+        public string|bool|null $indexController = null,
         public string|null $enabled = 'ICRUDOP',
     ) {}
-
-    public function indexable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'I');
-    }
-
-    public function creatable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'C');
-    }
-
-    public function viewable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'R');
-    }
-
-    public function editable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'U');
-    }
-
-    public function removeable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'D');
-    }
-
-    public function restorable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'O');
-    }
-
-    public function destroyable(): bool
-    {
-        return $this->enabled && -1 < strpos($this->enabled, 'P');
-    }
 }

@@ -59,25 +59,4 @@ class Account
 
         return $history;
     }
-
-    public function profileUpdate(): void
-    {
-        // $this->api->handleSave(AccountType::class, $this->context->user());
-        // $this->record('update profile');
-    }
-
-    public function passwordUpdate(): void
-    {
-        // $this->api->handleSave(
-        //     AccountPasswordType::class,
-        //     $this->context->currentUser(),
-        //     fn (Csuser $user) => $user->setPassword(
-        //         $this->passwordHasher->hashPassword(
-        //             $user,
-        //             $user->getNewPassword(),
-        //         ),
-        //     ),
-        // );
-        // $this->record('update password');
-    }
 }

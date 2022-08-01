@@ -4,21 +4,12 @@ namespace App\Extension\Crud;
 
 use App\Extension\ApiContext;
 use App\Extension\ControllerContext;
-use App\Extension\Crud\Concern\ColumnsFormat;
-use App\Extension\Crud\Concern\ColumnsIgnore;
-use App\Extension\Crud\Concern\CustomTemplate;
-use App\Extension\Crud\Concern\FilterPagination;
-use App\Extension\Crud\Concern\ModifyPagination;
-use App\Extension\Crud\Concern\PaginateFilter;
-use App\Extension\Crud\Concern\TemplateContext;
-use App\Extension\Crud\Concern\TemplateSelector;
-use App\Extension\Crud\Concern\WithTitle;
-use App\Extension\Utils;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[AutoconfigureTag('controller.service_arguments')]
 final class Controller
@@ -27,6 +18,7 @@ final class Controller
 
     public function __construct(
         private EntityManagerInterface $em,
+        private UrlGeneratorInterface $urlGenerator,
         private ControllerContext $controller,
         private ApiContext $api,
         #[TaggedIterator('app.crud')]
@@ -37,86 +29,62 @@ final class Controller
 
     public function index(Request $request, array $crud): Response
     {
-        $config = $this->configs[$crud['config']] ?? null;
+        $config = $this->getConfig($crud);
 
         if (self::wantJson($request)) {
-            return $this->api->data(
+            return $this->api->json(
                 $this->controller->paginate(
-                    $crud['entity'],
-                    $config instanceof FilterPagination ? $config->getPaginationFilter($request) : null,
-                    $config instanceof ModifyPagination ? $config->getPaginationModifier() : null,
+                    $config->entity,
+                    $config->getPaginationSearchable(),
+                    $config->getPaginationFilter($request),
+                    $config->getPaginationModifier(),
                     $request,
                 ),
             );
         }
 
-        $template = $this->resolveTemplate($config, $crud);
-        $parameters = $this->resolveParameters($config, $crud);
-
-        if (!isset($parameters['columns'])) {
-            $parameters['columns'] = $this->resolveColumns($config, $crud);
-        }
-
-        if (!isset($parameters['_title'])) {
-            $parameters['_title'] = $this->resolveTitle($config, $crud);
-        }
-
-        return $this->controller->render($template, $parameters);
+        return $this->render($config, array(
+            'columns' => $config->getColumns($this->em->getClassMetadata($config->entity)),
+            'controller' => $config->indexController ?? 'list',
+        ));
     }
 
-    protected function resolveTemplate(Configurator|null $config, array $crud): string
+    protected function render(Accessor $config, array $context = null, array $extensions = null): Response
     {
-        $view = $config instanceof TemplateSelector ? $config->getSelectedTemplate($crud['action']) : $crud['action'];
+        $base = $context ?? array();
 
-        return ($config['template'] ?? Resource::TEMPLATE_PREFIX) . '.' . $view;
-    }
-
-    protected function resolveParameters(Configurator|null $config, array $crud): array
-    {
-        return $config instanceof TemplateContext ? $config->getTemplateContext($crud['action']) : array();
-    }
-
-    protected function resolveTitle(Configurator|null $config, array $crud): string
-    {
-        if ($config instanceof WithTitle) {
-            return $config->getTitle($crud['action']);
+        if (!isset($base['_title'])) {
+            $base['_title'] = $config->getTitle();
         }
 
-        return $crud['title'] ?? Utils::caseTitle($crud['action'] . ' ' . $crud['name']);
-    }
-
-    protected function resolveColumns(Configurator|null $config, array $crud): array
-    {
-        if ($config instanceof ColumnsFormat) {
-            return $config->getColumnsFormat($crud['action']);
+        if (!isset($base['nav'])) {
+            $base['nav'] = $this->getNav($config);
         }
 
-        $meta = $this->em->getClassMetadata($crud['entity']);
-        $ignores = array_merge(
-            (
-                $config instanceof ColumnsIgnore ?
-                    $config->getIgnoredColumns($crud['action']) :
-                    null
-            ) ?? match ($crud['action']) {
-                default => array('id', 'password', 'createdAt', 'updatedAt', 'deletedAt'),
-            },
-            ($config instanceof ColumnsIgnore ? $config->getIgnoredColumnsAppend($crud['action']) : null) ?? array(),
+        return $this->controller->render(
+            $config->getTemplate(),
+            $config->getTemplateContext($base, $extensions),
         );
-        $columns = Utils::reduce(
-            $meta->getFieldNames(),
-            static function (array $columns, string $field) use ($meta, $ignores) {
-                if (in_array($field, $ignores)) {
-                    return $columns;
-                }
+    }
 
-                $columns[] = $field;
-
-                return $columns;
-            },
-            array(),
+    protected function getNav(Accessor $config): array
+    {
+        return array(
+            array(
+                'text' => 'Home',
+                'url' => $this->getPath($config),
+            ),
         );
+    }
 
-        return $columns;
+    protected function getPath(Accessor $config, string $action = null, array $parameters = null): string
+    {
+        return $this->urlGenerator->generate($config->name . '_' . ($action ?? $config->action), $parameters ?? array());
+    }
+
+    protected function getConfig(array $crud): Accessor
+    {
+        return Accessor::fromRouteArgument($this->configs[$crud['config']] ?? null, $crud);
     }
 
     protected static function wantJson(Request $request): bool

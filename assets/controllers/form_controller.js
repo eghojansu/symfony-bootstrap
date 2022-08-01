@@ -38,9 +38,7 @@ export default class extends Controller {
     this.fields = []
     this.lastResult = null
     this.processing = false
-  }
 
-  connect() {
     this.element.setAttribute('novalidate', true)
     this.element.addEventListener('submit', this.handleSubmit.bind(this))
     this.element.querySelectorAll('[name]').forEach(this.registerInput.bind(this))

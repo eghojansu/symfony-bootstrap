@@ -68,7 +68,7 @@ final class Extension extends AbstractExtension
             } elseif (true === $value) {
                 $line .= ' ' . $prop;
             } elseif ($value) {
-                $line .= ' ' . $prop . '="' . $this->buildProps($value, $prop) . '"';
+                $line .= ' ' . $this->buildProps($value, $prop);
             }
 
             return $line;
@@ -84,16 +84,19 @@ final class Extension extends AbstractExtension
 
     private function buildProps(array|string $value, string $prop = null): string
     {
-        return match($prop) {
-            'class' => $this->buildClassProp($value),
-            default => $this->buildDefaultProp($value),
-        };
+        list($val, $key, $is, $quote) = match($prop) {
+            'data' => array($this->buildDataProp($value), null, null, null),
+            'class' => array($this->buildClassProp($value)),
+            default => array($this->buildDefaultProp($value)),
+        } + array(1 => $prop, '=', true);
+
+        return $key . $is . trim($quote ? $this->quoteProp($val) : $val);
     }
 
     private function buildClassProp(array|string $value): string
     {
         if (is_string($value)) {
-            return trim($value);
+            return $value;
         }
 
         $line = '';
@@ -109,11 +112,25 @@ final class Extension extends AbstractExtension
             }
         }
 
-        return trim($line);
+        return $line;
+    }
+
+    private function buildDataProp(array $value): string
+    {
+        return Utils::reduce(
+            $value,
+            fn(string $line, $value, $key) => $line . ' data-' . $key . '=' . $this->quoteProp($value),
+            '',
+        );
     }
 
     private function buildDefaultProp(array|string $value): string
     {
         return (string) $value;
+    }
+
+    private function quoteProp(string $value): string
+    {
+        return '"' . addslashes($value) . '"';
     }
 }

@@ -13,28 +13,17 @@ final class Builder
     private $routes;
     private $name;
     private $path;
-    private $defaults;
 
     public function __construct(
         private ClassMetadata $entityMetadata,
         private Resource $crud,
-        private string|null $basePath,
+        string|null $basePath,
     ) {
-        $entity = Utils::className($entityMetadata->getName());
-
         $this->routes = new RouteCollection();
-        $this->name = $crud->name ?? Utils::caseSnake($entity);
-        $this->path = $crud->path ?? '/' . Utils::caseKebab($entity);
-        $this->defaults = array(
-            'crud' => array(
-                'config' => $crud->config,
-                'entity' => $entityMetadata->getName(),
-                'jsController' => $crud->jsController,
-                'name' => $this->name,
-                'template' => $crud->template,
-                'title' => $crud->title,
-            ),
-        );
+        $this->name = $crud->name ?? Utils::classToName($entityMetadata->getName());
+        $this->path = $basePath . ($crud->path ?? '/' . Utils::classToName($entityMetadata->getName(), 'kebab'));
+
+        $this->build();
     }
 
     public function getRoutes(): RouteCollection
@@ -42,7 +31,12 @@ final class Builder
         return $this->routes;
     }
 
-    public function add(
+    private function build(): void
+    {
+        $this->indexable() && $this->add(Resource::ACTION_INDEX, 'GET');
+    }
+
+    private function add(
         string $action,
         string|array $methods = null,
         string $path = null,
@@ -56,15 +50,8 @@ final class Builder
         $this->routes->add(
             $this->name . '_' . $action,
             new Route(
-                $this->basePath . $this->path . $path,
-                array_replace_recursive(
-                    $this->defaults,
-                    $defaults ?? array(),
-                    array(
-                        '_controller' => Controller::class . '::' . $action,
-                        'crud' => array('action' => $action),
-                    ),
-                ),
+                $this->path . $path,
+                $this->createDefaults($action, $defaults),
                 $requirements ?? array(),
                 $options ?? array(),
                 $host,
@@ -73,5 +60,56 @@ final class Builder
                 $condition,
             ),
         );
+    }
+
+    private function createDefaults(string $action, array $overrides = null): array
+    {
+        return array_replace_recursive(
+            array(
+                '_controller' => Controller::class . '::' . $action,
+                'crud' => Accessor::toRouteArgument(
+                    $this->crud,
+                    $action,
+                    $this->name,
+                    $this->entityMetadata->getName(),
+                ),
+            ),
+            $overrides ?? array(),
+        );
+    }
+
+    private function indexable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'I');
+    }
+
+    private function creatable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'C');
+    }
+
+    private function viewable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'R');
+    }
+
+    private function editable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'U');
+    }
+
+    private function removeable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'D');
+    }
+
+    private function restorable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'O');
+    }
+
+    private function destroyable(): bool
+    {
+        return $this->crud->enabled && -1 < strpos($this->crud->enabled, 'P');
     }
 }

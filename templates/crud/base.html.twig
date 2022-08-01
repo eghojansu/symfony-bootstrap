@@ -2,9 +2,5 @@
 
 {% set _panel = {
   title: _title ?? 'Crud',
-  nav: [
-    { text: 'Account', url: path('account') },
-    { text: 'Password', url: path('password') },
-    { text: 'Activities', url: path('activities') },
-  ],
+  nav: nav,
 }|merge(_panel ?? {}) %}
