@@ -4,7 +4,7 @@ namespace App\Extension\Crud\Concern;
 
 use Symfony\Component\HttpFoundation\Request;
 
-interface FilterPagination
+interface WithFilter
 {
-    public function getPaginationFilter(Request $request): array;
+    public function getFilter(string $action, Request $request): array;
 }

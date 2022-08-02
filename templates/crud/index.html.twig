@@ -9,6 +9,8 @@
 <script>
 window.tableOptions = {
   columns: {{ columns|json_encode|raw }},
+  buttons: {{ buttons|json_encode|raw }},
+  dom: 'Bfrtip',
   serverSide: true,
   ajax: {
     url: '{{ app.request.uri }}',

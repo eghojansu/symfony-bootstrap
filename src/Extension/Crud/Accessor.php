@@ -4,13 +4,13 @@ namespace App\Extension\Crud;
 
 use App\Extension\Utils;
 use App\Extension\Crud\Concern\WithTitle;
-use App\Extension\Crud\Concern\ColumnsFormat;
-use App\Extension\Crud\Concern\ColumnsIgnore;
-use App\Extension\Crud\Concern\TemplateContext;
-use App\Extension\Crud\Concern\FilterPagination;
-use App\Extension\Crud\Concern\ModifyPagination;
-use App\Extension\Crud\Concern\SearchablePagination;
-use App\Extension\Crud\Concern\TemplateSelector;
+use App\Extension\Crud\Concern\WithColumns;
+use App\Extension\Crud\Concern\WithColumnsIgnore;
+use App\Extension\Crud\Concern\WithContext;
+use App\Extension\Crud\Concern\WithFilter;
+use App\Extension\Crud\Concern\WithModifier;
+use App\Extension\Crud\Concern\WithSearchable;
+use App\Extension\Crud\Concern\WithTemplate;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -57,17 +57,17 @@ final class Accessor
 
     public function getPaginationFilter(Request $request): array|null
     {
-        return $this->config instanceof FilterPagination ? $this->config->getPaginationFilter($request) : null;
+        return $this->config instanceof WithFilter ? $this->config->getFilter($this->action, $request) : null;
     }
 
     public function getPaginationSearchable(): array|bool|null
     {
-        return $this->config instanceof SearchablePagination ? $this->config->getPaginationSearchable() : null;
+        return $this->config instanceof WithSearchable ? $this->config->getSearchable() : null;
     }
 
     public function getPaginationModifier(): \Closure|null
     {
-        return $this->config instanceof ModifyPagination ? $this->config->getPaginationModifier() : null;
+        return $this->config instanceof WithModifier ? $this->config->getModifier() : null;
     }
 
     public function getColumns(ClassMetadata $meta): array
@@ -89,8 +89,8 @@ final class Accessor
             array(),
         );
 
-        if ($this->config instanceof ColumnsFormat) {
-            return $this->config->getColumnsFormat($this->action, $columns);
+        if ($this->config instanceof WithColumns) {
+            return $this->config->getColumns($this->action, $columns);
         }
 
         return $columns;
@@ -98,14 +98,15 @@ final class Accessor
 
     public function getIgnoredColumns(): array
     {
+        if ($this->config instanceof WithColumnsIgnore && !$this->config->mergeIgnoredColumn($this->action)) {
+            return $this->config->getIgnoredColumns($this->action);
+        }
+
         return array_merge(
-            ($this->config instanceof ColumnsIgnore ?
-                $this->config->getIgnoredColumns($this->action) :
-                null
-            ) ?? match ($this->action) {
+            match ($this->action) {
                 default => array('id', 'password', 'createdAt', 'updatedAt', 'deletedAt'),
             },
-            ($this->config instanceof ColumnsIgnore ? $this->config->getIgnoredColumnsAppend($this->action) : null) ?? array(),
+            $this->config instanceof WithColumnsIgnore ? $this->config->getIgnoredColumns($this->action) : array(),
         );
     }
 
@@ -124,8 +125,8 @@ final class Accessor
     {
         $template = $this->action;
 
-        if ($this->config instanceof TemplateSelector) {
-            $template = $this->config->getSelectedTemplate($this->action);
+        if ($this->config instanceof WithTemplate) {
+            $template = $this->config->getTemplate($this->action);
         }
 
         return ($this->template ?? Resource::TEMPLATE_PREFIX) . '.' . $template;
@@ -135,8 +136,8 @@ final class Accessor
     {
         $newContext = $context ?? array();
 
-        if ($this->config instanceof TemplateContext) {
-            $newContext = $this->config->getTemplateContext($this->action, $newContext);
+        if ($this->config instanceof WithContext) {
+            $newContext = $this->config->getContext($this->action, $newContext);
         }
 
         if (!$extensions) {

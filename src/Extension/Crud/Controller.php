@@ -45,7 +45,10 @@ final class Controller
 
         return $this->render($config, array(
             'columns' => $config->getColumns($this->em->getClassMetadata($config->entity)),
-            'controller' => $config->indexController ?? 'list',
+            'buttons' => array(
+                array('extend' => 'link', 'href' => 'foo'),
+            ),
+            'controller' => $config->indexController ?? 'index',
         ));
     }
 
