@@ -170,16 +170,24 @@ final class ControllerContext
         array $filters = null,
         \Closure $modify = null,
         Request $request = null,
-        int $minPageSize = 15,
-        int $maxPageSize = 75,
+        int $minPageSize = 10,
+        int $maxPageSize = 100,
     ): Pagination {
+        $dataTable = !!($searchable ?? true);
         $req = $request ?? $this->requestStack->getCurrentRequest();
         $trash = $req->query->getBoolean('trash');
-        $page = max(1, $req->query->getInt('page'));
-        $size = min($maxPageSize, max($minPageSize, $req->query->getInt('size')));
-        $offset = ($page - 1) * $size;
         $filtered = null;
         $argPos = 0;
+
+        if ($dataTable) {
+            $page = 0;
+            $size = min($maxPageSize, max($minPageSize, $req->query->getInt('length')));
+            $offset = max(0, $req->query->getInt('start'));
+        } else {
+            $page = max(1, $req->query->getInt('page'));
+            $size = min($maxPageSize, max($minPageSize, $req->query->getInt('size')));
+            $offset = ($page - 1) * $size;
+        }
 
         /** @var EntityRepository */
         $repo = $this->em->getRepository($entity);
@@ -218,8 +226,8 @@ final class ControllerContext
             new Paginator($qb),
             $page,
             $size,
-            true,
-            $req->query->getInt('draw', 0),
+            $dataTable,
+            $req->query->getInt('draw'),
         );
     }
 

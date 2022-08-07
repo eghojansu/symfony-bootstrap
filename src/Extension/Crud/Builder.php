@@ -67,7 +67,7 @@ final class Builder
         return array_replace_recursive(
             array(
                 '_controller' => Controller::class . '::' . $action,
-                'crud' => Accessor::toRouteArgument(
+                '_crud' => Accessor::toRouteArgument(
                     $this->crud,
                     $action,
                     $this->name,

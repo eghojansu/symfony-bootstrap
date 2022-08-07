@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Core\Security;
 
 #[AutoconfigureTag('controller.service_arguments')]
 final class Controller
@@ -19,6 +20,7 @@ final class Controller
     public function __construct(
         private EntityManagerInterface $em,
         private UrlGeneratorInterface $urlGenerator,
+        private Security $security,
         private ControllerContext $controller,
         private ApiContext $api,
         #[TaggedIterator('app.crud')]
@@ -27,71 +29,64 @@ final class Controller
         $this->configs = iterator_to_array($configs);
     }
 
-    public function index(Request $request, array $crud): Response
+    public function index(Request $request, array $_crud): Response
     {
-        $config = $this->getConfig($crud);
+        $crud = $this->getConfig($request, $_crud);
 
-        if (self::wantJson($request)) {
+        if ($crud->wantJson()) {
             return $this->api->json(
                 $this->controller->paginate(
-                    $config->entity,
-                    $config->getPaginationSearchable(),
-                    $config->getPaginationFilter($request),
-                    $config->getPaginationModifier(),
+                    $crud->entity,
+                    $crud->getPaginationSearchable(),
+                    $crud->getPaginationFilter($request),
+                    $crud->getPaginationModifier(),
                     $request,
                 ),
             );
         }
 
-        return $this->render($config, array(
-            'columns' => $config->getColumns($this->em->getClassMetadata($config->entity)),
-            'buttons' => array(
-                array('extend' => 'link', 'href' => 'foo'),
-            ),
-            'controller' => $config->indexController ?? 'index',
-        ));
+        $context = compact('crud');
+
+        return $this->render($crud, $context);
     }
 
-    protected function render(Accessor $config, array $context = null, array $extensions = null): Response
+    protected function render(Accessor $crud, array $context = null, array $extensions = null): Response
     {
         $base = $context ?? array();
 
         if (!isset($base['_title'])) {
-            $base['_title'] = $config->getTitle();
+            $base['_title'] = $crud->getTitle();
         }
 
         if (!isset($base['nav'])) {
-            $base['nav'] = $this->getNav($config);
+            $base['nav'] = $this->getNav($crud);
         }
 
         return $this->controller->render(
-            $config->getTemplate(),
-            $config->getTemplateContext($base, $extensions),
+            $crud->getTemplate(),
+            $crud->getTemplateContext($base, $extensions),
         );
     }
 
-    protected function getNav(Accessor $config): array
+    protected function getNav(Accessor $crud): array
     {
         return array(
             array(
                 'text' => 'Home',
-                'url' => $this->getPath($config),
+                'url' => $crud->path(),
             ),
         );
     }
 
-    protected function getPath(Accessor $config, string $action = null, array $parameters = null): string
+    protected function getConfig(Request $request, array $crud): Accessor
     {
-        return $this->urlGenerator->generate($config->name . '_' . ($action ?? $config->action), $parameters ?? array());
-    }
-
-    protected function getConfig(array $crud): Accessor
-    {
-        return Accessor::fromRouteArgument($this->configs[$crud['config']] ?? null, $crud);
-    }
-
-    protected static function wantJson(Request $request): bool
-    {
-        return 'json' === $request->getPreferredFormat();
+        return Accessor::fromRouteArgument(
+            $this->em,
+            $this->urlGenerator,
+            $this->security,
+            $request,
+            $this->configs[$crud['config']] ?? null,
+            $crud,
+        );
     }
 }

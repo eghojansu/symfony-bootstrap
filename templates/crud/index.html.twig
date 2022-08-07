@@ -1,20 +1,25 @@
 {% extends 'crud/base.html.twig' %}
 
 {% block panel %}
-  <table {{ with_props({ class: 'table table-striped', data: { controller: controller } }) }}></table>
+  <table {{ with_props({ class: 'table table-striped', data: {
+    controller: crud.indexController ?? 'index',
+  }}) }}></table>
 {% endblock %}
 
 {% block javascripts %}
 {{ parent() }}
 <script>
 window.tableOptions = {
-  columns: {{ columns|json_encode|raw }},
-  buttons: {{ buttons|json_encode|raw }},
-  dom: 'Bfrtip',
+  columns: {{ crud.columns|json_encode|raw }},
+  buttons: {{ crud.buttons|json_encode|raw }},
   serverSide: true,
   ajax: {
     url: '{{ app.request.uri }}',
   },
+  dom: `<'row'<'col-sm-12 col-md-6'f><'col-sm-12 col-md-6 text-end'B>>
+        <'row'<'col-sm-12'tr>>
+        <'row mt-3'<'col-sm-12 col-md-4'i><'col-sm-12 col-md-4'l><'col-sm-12 col-md-4'p>>
+      `.trim(),
 }
 </script>
 {% endblock %}
